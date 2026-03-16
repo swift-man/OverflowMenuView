@@ -176,7 +176,7 @@ public struct OverflowMenuView: View {
     Title: View,
     LeadingContent: View,
     TrailingContent: View,
-    MenuButton: View,
+    OpenCloseButtonContent: View,
     LeftBackground: View,
     MainBackground: View,
     LeftView: View,
@@ -193,7 +193,7 @@ public struct OverflowMenuView: View {
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
     @ViewBuilder leadingContent: @escaping (OverflowMenuContext) -> LeadingContent,
     @ViewBuilder trailingContent: @escaping (OverflowMenuContext) -> TrailingContent,
-    @ViewBuilder openCloseButton: @escaping (OverflowMenuContext) -> MenuButton,
+    @ViewBuilder openCloseButton: @escaping (OverflowMenuContext) -> OpenCloseButtonContent,
     @ViewBuilder leftBackground: @escaping () -> LeftBackground,
     @ViewBuilder mainBackground: @escaping () -> MainBackground,
     @ViewBuilder leftView: @escaping (OverflowMenuContext) -> LeftView,
@@ -227,59 +227,6 @@ public struct OverflowMenuView: View {
     self.mainBackground = { AnyView(mainBackground()) }
     self.leftView = { AnyView(leftView($0)) }
     self.mainView = { AnyView(mainView($0)) }
-  }
-  
-  /// Creates an overflow menu container with a custom control for opening and
-  /// closing the menu.
-  ///
-  /// This overload is kept for source compatibility. Prefer the initializer
-  /// that uses the `openCloseButton` label.
-  @available(*, deprecated, message: "Use the initializer that takes openCloseButton instead.")
-  public init<
-    Title: View,
-    LeadingContent: View,
-    TrailingContent: View,
-    MenuButton: View,
-    LeftBackground: View,
-    MainBackground: View,
-    LeftView: View,
-    MainView: View
-  >(
-    isMenuPresented: Binding<Bool>? = nil,
-    drawerWidth: CGFloat = 304,
-    maxDimOpacity: CGFloat = 0.12,
-    verticalSpacing: CGFloat = 18,
-    mainPadding: CGFloat = 16,
-    sidePadding: CGFloat = 20,
-    settleAnimation: Animation = .easeOut(duration: 0.2),
-    onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
-    @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
-    @ViewBuilder leadingContent: @escaping (OverflowMenuContext) -> LeadingContent,
-    @ViewBuilder trailingContent: @escaping (OverflowMenuContext) -> TrailingContent,
-    @ViewBuilder menuButton: @escaping (OverflowMenuContext) -> MenuButton,
-    @ViewBuilder leftBackground: @escaping () -> LeftBackground,
-    @ViewBuilder mainBackground: @escaping () -> MainBackground,
-    @ViewBuilder leftView: @escaping (OverflowMenuContext) -> LeftView,
-    @ViewBuilder mainView: @escaping (OverflowMenuContext) -> MainView
-  ) {
-    self.init(
-      isMenuPresented: isMenuPresented,
-      drawerWidth: drawerWidth,
-      maxDimOpacity: maxDimOpacity,
-      verticalSpacing: verticalSpacing,
-      mainPadding: mainPadding,
-      sidePadding: sidePadding,
-      settleAnimation: settleAnimation,
-      onEvent: onEvent,
-      title: title,
-      leadingContent: leadingContent,
-      trailingContent: trailingContent,
-      openCloseButton: menuButton,
-      leftBackground: leftBackground,
-      mainBackground: mainBackground,
-      leftView: leftView,
-      mainView: mainView
-    )
   }
   
   private var openOffset: CGFloat {
