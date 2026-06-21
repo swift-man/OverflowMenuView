@@ -216,6 +216,9 @@ Available events:
 - `verticalSpacing` controls the gap between the top bar and the main content
 - `mainPadding` controls safe-area-aware padding around the main panel
 - `sidePadding` controls safe-area-aware padding around the drawer content
+- `topBarBackgroundColor` defaults to the system background color and adapts to
+  light and dark appearance
+- `topBarStrokeColor` defaults to the system separator color
 - `settleAnimation` controls the final open and close animation
 
 ## Folder Structure

@@ -64,8 +64,11 @@ public struct OverflowMenuView: View {
   ///   - mainPadding: The safe-area-aware padding applied around the main panel.
   ///   - sidePadding: The safe-area-aware padding applied around the left drawer
   ///     content.
-  ///   - topBarBackgroundColor: The fill color applied to the top bar.
-  ///   - topBarStrokeColor: The stroke color applied to the top bar border.
+  ///   - topBarBackgroundColor: The fill color applied to the top bar. The
+  ///     default uses the system background color so it adapts to light and
+  ///     dark appearance.
+  ///   - topBarStrokeColor: The stroke color applied to the top bar border. The
+  ///     default uses the system separator color.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
@@ -96,8 +99,8 @@ public struct OverflowMenuView: View {
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
-    topBarBackgroundColor: Color = Color(red: 0.98, green: 0.96, blue: 0.92),
-    topBarStrokeColor: Color = Color.black.opacity(0.05),
+    topBarBackgroundColor: Color = Color(uiColor: .systemBackground),
+    topBarStrokeColor: Color = Color(uiColor: .separator),
     settleAnimation: Animation = .easeOut(duration: 0.2),
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
@@ -164,8 +167,11 @@ public struct OverflowMenuView: View {
   ///   - mainPadding: The safe-area-aware padding applied around the main panel.
   ///   - sidePadding: The safe-area-aware padding applied around the left drawer
   ///     content.
-  ///   - topBarBackgroundColor: The fill color applied to the top bar.
-  ///   - topBarStrokeColor: The stroke color applied to the top bar border.
+  ///   - topBarBackgroundColor: The fill color applied to the top bar. The
+  ///     default uses the system background color so it adapts to light and
+  ///     dark appearance.
+  ///   - topBarStrokeColor: The stroke color applied to the top bar border. The
+  ///     default uses the system separator color.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
@@ -198,8 +204,8 @@ public struct OverflowMenuView: View {
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
-    topBarBackgroundColor: Color = Color(red: 0.98, green: 0.96, blue: 0.92),
-    topBarStrokeColor: Color = Color.black.opacity(0.05),
+    topBarBackgroundColor: Color = Color(uiColor: .systemBackground),
+    topBarStrokeColor: Color = Color(uiColor: .separator),
     settleAnimation: Animation = .easeOut(duration: 0.2),
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
