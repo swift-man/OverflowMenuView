@@ -20,6 +20,7 @@ import SwiftUI
 /// - Externally, by passing a binding to `isMenuPresented`.
 public struct OverflowMenuView: View {
   @State private var menuOffset: CGFloat = 0
+  @State private var isTrackingMenuDrag = false
   @State private var dragStartOffset: CGFloat?
   @State private var lastDragTranslation: CGFloat = 0
   @State private var lastDragDirection: OverflowMenuDragDirection = .none
@@ -95,7 +96,7 @@ public struct OverflowMenuView: View {
   >(
     isMenuPresented: Binding<Bool>? = nil,
     drawerWidth: CGFloat = 304,
-    maxDimOpacity: CGFloat = 0.12,
+    maxDimOpacity: CGFloat = 0.45,
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
@@ -200,7 +201,7 @@ public struct OverflowMenuView: View {
   >(
     isMenuPresented: Binding<Bool>? = nil,
     drawerWidth: CGFloat = 304,
-    maxDimOpacity: CGFloat = 0.12,
+    maxDimOpacity: CGFloat = 0.45,
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
@@ -343,7 +344,7 @@ public struct OverflowMenuView: View {
           .allowsHitTesting(true)
       }
       .contentShape(Rectangle())
-      .highPriorityGesture(menuDragGesture)
+      .simultaneousGesture(menuDragGesture)
       .onAppear {
         syncMenuStateFromExternalBinding()
       }
@@ -369,11 +370,12 @@ public struct OverflowMenuView: View {
   private var menuDragGesture: some Gesture {
     DragGesture(minimumDistance: 3, coordinateSpace: .global)
       .onChanged { value in
-        guard shouldHandleMenuDrag(value) else {
-          return
-        }
-        
-        if dragStartOffset == nil {
+        if !isTrackingMenuDrag {
+          guard shouldHandleMenuDrag(value) else {
+            return
+          }
+
+          isTrackingMenuDrag = true
           dragStartOffset = menuOffset
           lastDragTranslation = value.translation.width
           lastDragDirection = dragDirection(for: value.translation.width)
@@ -385,11 +387,11 @@ public struct OverflowMenuView: View {
         menuOffset = clampedMenuOffset(startOffset + value.translation.width)
       }
       .onEnded { value in
-        guard shouldHandleMenuDrag(value) else {
+        guard isTrackingMenuDrag else {
           resetMenuDragState()
           return
         }
-        
+
         let startOffset = dragStartOffset ?? menuOffset
         let currentOffset = clampedMenuOffset(startOffset + value.translation.width)
         let projectedOffset = clampedMenuOffset(startOffset + value.predictedEndTranslation.width)
@@ -452,6 +454,7 @@ public struct OverflowMenuView: View {
   }
   
   private func resetMenuDragState() {
+    isTrackingMenuDrag = false
     dragStartOffset = nil
     lastDragTranslation = 0
     lastDragDirection = .none
@@ -488,14 +491,15 @@ public struct OverflowMenuView: View {
     to requestedState: OverflowMenuPresentationState,
     from sourceOffset: CGFloat? = nil
   ) {
-    guard requestedState != currentPresentationState else {
+    let targetOffset = targetOffset(for: requestedState)
+    let referenceOffset = sourceOffset ?? menuOffset
+    let isAlreadyAtTarget = abs(referenceOffset - targetOffset) <= 0.5
+
+    guard requestedState != currentPresentationState || !isAlreadyAtTarget else {
       syncExternalPresentationState(with: requestedState)
       resetMenuDragState()
       return
     }
-    
-    let targetOffset = targetOffset(for: requestedState)
-    let referenceOffset = sourceOffset ?? menuOffset
     
     onEvent(willEvent(for: requestedState))
     
