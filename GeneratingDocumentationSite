@@ -1,0 +1,59 @@
+#!/bin/sh
+set -eu
+
+TARGET_NAME="${TARGET_NAME:-OverflowMenuUI}"
+PACKAGE_BUILD_PATH="${PACKAGE_BUILD_PATH:-.build}"
+SCHEME_NAME="${SCHEME_NAME:-$TARGET_NAME}"
+DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-$PACKAGE_BUILD_PATH/docc-derived-data}"
+DOCS_OUTPUT_PATH="${DOCS_OUTPUT_PATH:-./docs}"
+HOSTING_BASE_PATH="${HOSTING_BASE_PATH:-OverflowMenuView}"
+DESTINATION="${DESTINATION:-generic/platform=iOS Simulator}"
+
+DOCC="$(xcrun --find docc)"
+
+remove_path() {
+  path="$1"
+  [ -e "$path" ] || return 0
+  rm -rf "$path" 2>/dev/null || {
+    sleep 1
+    rm -rf "$path"
+  }
+}
+
+remove_path "$DERIVED_DATA_PATH"
+remove_path "$DOCS_OUTPUT_PATH"
+
+xcodebuild docbuild \
+  -scheme "$SCHEME_NAME" \
+  -destination "$DESTINATION" \
+  -derivedDataPath "$DERIVED_DATA_PATH" \
+  COMPILER_INDEX_STORE_ENABLE=NO \
+  -quiet
+
+DOCC_ARCHIVE_PATH="$(find "$DERIVED_DATA_PATH/Build/Products" -name "$TARGET_NAME.doccarchive" -type d -print -quit)"
+if [ -z "$DOCC_ARCHIVE_PATH" ]; then
+  echo "error: no DocC archive found for $TARGET_NAME" >&2
+  exit 1
+fi
+
+"$DOCC" process-archive \
+  transform-for-static-hosting "$DOCC_ARCHIVE_PATH" \
+  --output-path "$DOCS_OUTPUT_PATH" \
+  --hosting-base-path "$HOSTING_BASE_PATH"
+
+HOSTING_BASE_PATH="/${HOSTING_BASE_PATH#/}"
+export HOSTING_BASE_PATH
+
+perl -0pi -e '
+  my $base = $ENV{"HOSTING_BASE_PATH"};
+  s#href="/favicon\.ico"#href="$base/favicon.ico"#g;
+  s#href="/favicon\.svg"#href="$base/favicon.svg"#g;
+  s#var baseUrl = "/"#var baseUrl = "$base/"#g;
+  s#src="/js/#src="$base/js/#g;
+  s#href="/css/#href="$base/css/#g;
+' "$DOCS_OUTPUT_PATH/index.html"
+
+find "$DOCS_OUTPUT_PATH" -type f -name '*.js' \
+  -exec perl -0pi -e 's/[ \t]+$//mg' {} +
+
+remove_path "$DERIVED_DATA_PATH" || true

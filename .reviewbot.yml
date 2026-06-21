@@ -1,0 +1,62 @@
+version: 1
+
+review:
+  include:
+  - "**/*.swift"
+  - "**/*.md"
+  - "**/*.yml"
+  - "**/*.yaml"
+  - "Package.swift"
+  - "README.md"
+  - "LICENSE"
+  - "GeneratingDocumentationSite"
+
+  exclude:
+  # dependency / build output
+  - ".build/**"
+  - ".swiftpm/**"
+  - "DerivedData/**"
+  - "build/**"
+  - "**/build/**"
+  - "Pods/**"
+  - "Carthage/**"
+  - "Carthage/Build/**"
+  - "Dependencies/**"
+  - ".accio/**"
+  - "iOSInjectionProject/**"
+
+  # generated source
+  - "**/Generated/**"
+  - "**/*.generated.swift"
+  - "**/*.pb.swift"
+  - "**/*.graphql.swift"
+  - "**/*+Generated.swift"
+
+  # resources / binary assets
+  - "**/*.xcassets/**"
+  - "assets/**"
+  - "**/*.png"
+  - "**/*.jpg"
+  - "**/*.jpeg"
+  - "**/*.gif"
+  - "**/*.webp"
+  - "**/*.pdf"
+  - "**/*.mp4"
+  - "**/*.mov"
+
+  # lock files / local package staging artifacts
+  - "Package.resolved"
+  - "Podfile.lock"
+
+  # generated documentation output
+  - "docs/**"
+  - "**/*.doccarchive/**"
+
+  always_review:
+  - ".reviewbot.yml"
+  - ".github/workflows/**"
+  - ".gitignore"
+  - "Package.swift"
+  - "Sources/**/*.docc/**"
+  - "GeneratingDocumentationSite"
+  - "README.md"

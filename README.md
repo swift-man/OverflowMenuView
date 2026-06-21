@@ -1,5 +1,12 @@
 # OverflowMenuUI
 
+![Badge](https://img.shields.io/badge/Swift-6.0-FA7343.svg?style=flat-square&logo=Swift&logoColor=white)
+![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=white)
+![Badge - Version](https://img.shields.io/badge/Version-0.6.0-1177AA?style=flat-square)
+![Badge - Swift Package Manager](https://img.shields.io/badge/SPM-compatible-orange?style=flat-square)
+![Badge - Platform](https://img.shields.io/badge/iOS-v17.0-yellow?style=flat-square)
+![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)
+
 `OverflowMenuUI` is a SwiftUI slide-out menu container for iOS.
 
 It provides:
@@ -14,8 +21,13 @@ It provides:
 ## Requirements
 
 - iOS 17.0+
-- Swift 6.2 toolchain
+- Swift 6.0 toolchain
 - SwiftUI
+
+## API Documentation
+
+Swift DocC API documentation for `OverflowMenuUI` is available at
+https://docs.gorani.me/OverflowMenuView/documentation/overflowmenuui/.
 
 ## Package
 

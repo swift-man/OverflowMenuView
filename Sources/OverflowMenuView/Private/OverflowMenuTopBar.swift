@@ -12,6 +12,8 @@ struct OverflowMenuTopBar: View {
   let leadingContent: AnyView
   let trailingContent: AnyView
   let openCloseButton: AnyView
+  let backgroundColor: Color
+  let strokeColor: Color
   
   var body: some View {
     ZStack {
@@ -32,11 +34,11 @@ struct OverflowMenuTopBar: View {
     .padding(.vertical, 14)
     .background(
       RoundedRectangle(cornerRadius: 24, style: .continuous)
-        .fill(Color(red: 0.98, green: 0.96, blue: 0.92))
+        .fill(backgroundColor)
     )
     .overlay {
       RoundedRectangle(cornerRadius: 24, style: .continuous)
-        .stroke(Color.black.opacity(0.05), lineWidth: 1)
+        .stroke(strokeColor, lineWidth: 1)
     }
   }
 }

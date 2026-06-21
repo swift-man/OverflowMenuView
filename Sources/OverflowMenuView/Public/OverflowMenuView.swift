@@ -32,6 +32,8 @@ public struct OverflowMenuView: View {
   private let verticalSpacing: CGFloat
   private let mainPadding: CGFloat
   private let sidePadding: CGFloat
+  private let topBarBackgroundColor: Color
+  private let topBarStrokeColor: Color
   private let settleAnimation: Animation
   private let onEvent: (OverflowMenuEvent) -> Void
   private let title: (OverflowMenuContext) -> AnyView
@@ -62,6 +64,8 @@ public struct OverflowMenuView: View {
   ///   - mainPadding: The safe-area-aware padding applied around the main panel.
   ///   - sidePadding: The safe-area-aware padding applied around the left drawer
   ///     content.
+  ///   - topBarBackgroundColor: The fill color applied to the top bar.
+  ///   - topBarStrokeColor: The stroke color applied to the top bar border.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
@@ -92,6 +96,8 @@ public struct OverflowMenuView: View {
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
+    topBarBackgroundColor: Color = Color(red: 0.98, green: 0.96, blue: 0.92),
+    topBarStrokeColor: Color = Color.black.opacity(0.05),
     settleAnimation: Animation = .easeOut(duration: 0.2),
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
@@ -120,6 +126,8 @@ public struct OverflowMenuView: View {
     self.verticalSpacing = verticalSpacing
     self.mainPadding = mainPadding
     self.sidePadding = sidePadding
+    self.topBarBackgroundColor = topBarBackgroundColor
+    self.topBarStrokeColor = topBarStrokeColor
     self.settleAnimation = settleAnimation
     self.onEvent = onEvent
     self.title = { AnyView(title($0)) }
@@ -156,6 +164,8 @@ public struct OverflowMenuView: View {
   ///   - mainPadding: The safe-area-aware padding applied around the main panel.
   ///   - sidePadding: The safe-area-aware padding applied around the left drawer
   ///     content.
+  ///   - topBarBackgroundColor: The fill color applied to the top bar.
+  ///   - topBarStrokeColor: The stroke color applied to the top bar border.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
@@ -188,6 +198,8 @@ public struct OverflowMenuView: View {
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
+    topBarBackgroundColor: Color = Color(red: 0.98, green: 0.96, blue: 0.92),
+    topBarStrokeColor: Color = Color.black.opacity(0.05),
     settleAnimation: Animation = .easeOut(duration: 0.2),
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
@@ -217,6 +229,8 @@ public struct OverflowMenuView: View {
     self.verticalSpacing = verticalSpacing
     self.mainPadding = mainPadding
     self.sidePadding = sidePadding
+    self.topBarBackgroundColor = topBarBackgroundColor
+    self.topBarStrokeColor = topBarStrokeColor
     self.settleAnimation = settleAnimation
     self.onEvent = onEvent
     self.title = { AnyView(title($0)) }
@@ -285,7 +299,9 @@ public struct OverflowMenuView: View {
         title: title(currentContext),
         leadingContent: leadingContent(currentContext),
         trailingContent: trailingContent(currentContext),
-        openCloseButton: openCloseButton(currentContext)
+        openCloseButton: openCloseButton(currentContext),
+        backgroundColor: topBarBackgroundColor,
+        strokeColor: topBarStrokeColor
       )
       let mainPanel = OverflowMenuMainPanel(
         verticalSpacing: verticalSpacing,
