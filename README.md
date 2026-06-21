@@ -13,6 +13,7 @@ It provides:
 - A left-side drawer and a main content surface in one container
 - A built-in top bar with a default open-close button, or support for a custom one
 - Drag-to-open and drag-to-close interactions
+- Optional disabling of menu interactions for screens that should keep the drawer closed
 - A dimmed overlay that closes the menu when tapped
 - Optional external control through `Binding<Bool>`
 - Context-driven actions inside injected content via `OverflowMenuContext`
@@ -184,6 +185,26 @@ The binding stays in sync in both directions:
 - Drag gestures update the binding after the drawer settles
 - Tapping the dimmed overlay updates the binding
 
+## Disabling Menu Interaction
+
+Set `isMenuInteractionEnabled` to `false` when a screen should reuse the
+container chrome while preventing the drawer from opening through gestures,
+context actions, or external state.
+
+```swift
+OverflowMenuView(
+  isMenuPresented: $isMenuPresented,
+  isMenuInteractionEnabled: false,
+  title: { _ in Text("Settings") },
+  leadingContent: { _ in EmptyView() },
+  trailingContent: { _ in EmptyView() },
+  leftBackground: { Color.gray.opacity(0.15) },
+  mainBackground: { Color.white },
+  leftView: { _ in Text("Drawer") },
+  mainView: { _ in Text("Settings") }
+)
+```
+
 ## OverflowMenuContext
 
 Every public content closure receives an `OverflowMenuContext`.
@@ -218,6 +239,8 @@ Available events:
 - `sidePadding` controls safe-area-aware padding around the drawer content
 - `topBarBackgroundColor` defaults to the system background color and adapts to
   light and dark appearance
+- `isMenuInteractionEnabled` can disable opening gestures and context actions
+  while keeping the menu closed
 - `topBarStrokeColor` defaults to the system separator color
 - Horizontal-dominant drags control the drawer while vertical-dominant gestures
   are left to the content views

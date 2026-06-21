@@ -16,17 +16,23 @@ struct OverflowMenuTopBar: View {
   let strokeColor: Color
 
   var body: some View {
-    HStack(spacing: 12) {
+    ZStack {
       HStack(spacing: 12) {
         openCloseButton
         leadingContent
       }
       .frame(maxWidth: .infinity, alignment: .leading)
 
-      title
-        .lineLimit(1)
-        .minimumScaleFactor(0.75)
-        .frame(maxWidth: .infinity, alignment: .center)
+      HStack(spacing: 0) {
+        Spacer(minLength: 92)
+
+        title
+          .lineLimit(1)
+          .minimumScaleFactor(0.75)
+          .frame(maxWidth: .infinity, alignment: .center)
+
+        Spacer(minLength: 92)
+      }
 
       trailingContent
         .frame(maxWidth: .infinity, alignment: .trailing)

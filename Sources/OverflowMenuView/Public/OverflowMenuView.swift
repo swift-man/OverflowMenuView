@@ -41,6 +41,7 @@ public struct OverflowMenuView: View {
   private let topBarBackgroundColor: Color
   private let topBarStrokeColor: Color
   private let settleAnimation: Animation
+  private let isMenuInteractionEnabled: Bool
   private let onEvent: (OverflowMenuEvent) -> Void
   private let title: (OverflowMenuContext) -> AnyView
   private let leadingContent: (OverflowMenuContext) -> AnyView
@@ -77,6 +78,9 @@ public struct OverflowMenuView: View {
   ///     default uses the system separator color.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
+  ///   - isMenuInteractionEnabled: A Boolean value that controls whether the
+  ///     drawer can be opened by gestures or context actions. The default value
+  ///     preserves the standard interactive menu behavior.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
   ///     closes.
   ///   - title: Builds the centered title content shown in the top bar.
@@ -108,6 +112,7 @@ public struct OverflowMenuView: View {
     topBarBackgroundColor: Color = Color(uiColor: .systemBackground),
     topBarStrokeColor: Color = Color(uiColor: .separator),
     settleAnimation: Animation = .easeOut(duration: 0.2),
+    isMenuInteractionEnabled: Bool = true,
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
     @ViewBuilder leadingContent: @escaping (OverflowMenuContext) -> LeadingContent,
@@ -138,6 +143,7 @@ public struct OverflowMenuView: View {
     self.topBarBackgroundColor = topBarBackgroundColor
     self.topBarStrokeColor = topBarStrokeColor
     self.settleAnimation = settleAnimation
+    self.isMenuInteractionEnabled = isMenuInteractionEnabled
     self.onEvent = onEvent
     self.title = { AnyView(title($0)) }
     self.leadingContent = { AnyView(leadingContent($0)) }
@@ -180,6 +186,9 @@ public struct OverflowMenuView: View {
   ///     default uses the system separator color.
   ///   - settleAnimation: The animation used when the menu settles into the
   ///     fully open or fully closed state.
+  ///   - isMenuInteractionEnabled: A Boolean value that controls whether the
+  ///     drawer can be opened by gestures or context actions. The default value
+  ///     preserves the standard interactive menu behavior.
   ///   - onEvent: A closure that receives lifecycle events as the menu opens and
   ///     closes.
   ///   - title: Builds the centered title content shown in the top bar.
@@ -213,6 +222,7 @@ public struct OverflowMenuView: View {
     topBarBackgroundColor: Color = Color(uiColor: .systemBackground),
     topBarStrokeColor: Color = Color(uiColor: .separator),
     settleAnimation: Animation = .easeOut(duration: 0.2),
+    isMenuInteractionEnabled: Bool = true,
     onEvent: @escaping (OverflowMenuEvent) -> Void = { _ in },
     @ViewBuilder title: @escaping (OverflowMenuContext) -> Title,
     @ViewBuilder leadingContent: @escaping (OverflowMenuContext) -> LeadingContent,
@@ -244,6 +254,7 @@ public struct OverflowMenuView: View {
     self.topBarBackgroundColor = topBarBackgroundColor
     self.topBarStrokeColor = topBarStrokeColor
     self.settleAnimation = settleAnimation
+    self.isMenuInteractionEnabled = isMenuInteractionEnabled
     self.onEvent = onEvent
     self.title = { AnyView(title($0)) }
     self.leadingContent = { AnyView(leadingContent($0)) }
@@ -260,7 +271,7 @@ public struct OverflowMenuView: View {
   }
 
   private var isMenuPresented: Bool {
-    menuOffset > 1
+    isMenuInteractionEnabled && menuOffset > 1
   }
 
   private var currentPresentationState: OverflowMenuPresentationState {
@@ -272,7 +283,7 @@ public struct OverflowMenuView: View {
   }
 
   private var menuProgress: CGFloat {
-    guard openOffset > 0 else {
+    guard isMenuInteractionEnabled, openOffset > 0 else {
       return 0
     }
 
@@ -293,6 +304,7 @@ public struct OverflowMenuView: View {
   public var body: some View {
     GeometryReader { proxy in
       let safeAreaInsets = proxy.safeAreaInsets
+      let activeMenuOffset = isMenuInteractionEnabled ? menuOffset : 0
       let currentContext = context(safeAreaInsets: safeAreaInsets)
       let fullHeight = proxy.size.height + safeAreaInsets.top + safeAreaInsets.bottom
       let fullWidth = proxy.size.width + safeAreaInsets.leading + safeAreaInsets.trailing
@@ -339,13 +351,13 @@ public struct OverflowMenuView: View {
       ZStack(alignment: .topLeading) {
         backgroundTrack
           .offset(
-            x: -drawerWidth + menuOffset - safeAreaInsets.leading,
+            x: -drawerWidth + activeMenuOffset - safeAreaInsets.leading,
             y: -safeAreaInsets.top
           )
           .allowsHitTesting(false)
 
         contentTrack
-          .offset(x: -drawerWidth + menuOffset)
+          .offset(x: -drawerWidth + activeMenuOffset)
           .allowsHitTesting(true)
       }
       .contentShape(Rectangle())
@@ -358,6 +370,10 @@ public struct OverflowMenuView: View {
       }
       .onChange(of: scenePhase) { _, newPhase in
         handleScenePhaseChange(newPhase)
+      }
+      .onChange(of: isMenuInteractionEnabled) { _, isEnabled in
+        guard !isEnabled else { return }
+        closeMenu()
       }
     }
   }
@@ -427,7 +443,7 @@ public struct OverflowMenuView: View {
   }
 
   private func shouldHandleMenuDrag(_ value: DragGesture.Value) -> Bool {
-    guard scenePhase == .active else {
+    guard scenePhase == .active, isMenuInteractionEnabled else {
       return false
     }
 
@@ -483,6 +499,11 @@ public struct OverflowMenuView: View {
   }
 
   private func toggleMenu() {
+    guard isMenuInteractionEnabled else {
+      closeMenu()
+      return
+    }
+
     guard scenePhase == .active else {
       dismissMenuForSceneTransition()
       return
@@ -492,6 +513,11 @@ public struct OverflowMenuView: View {
   }
 
   private func openMenu() {
+    guard isMenuInteractionEnabled else {
+      closeMenu()
+      return
+    }
+
     guard scenePhase == .active else {
       dismissMenuForSceneTransition()
       return
@@ -505,6 +531,11 @@ public struct OverflowMenuView: View {
   }
 
   private func syncMenuStateFromExternalBinding() {
+    guard isMenuInteractionEnabled else {
+      closeMenu()
+      return
+    }
+
     guard scenePhase == .active else {
       dismissMenuForSceneTransition()
       return
