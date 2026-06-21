@@ -14,21 +14,22 @@ struct OverflowMenuTopBar: View {
   let openCloseButton: AnyView
   let backgroundColor: Color
   let strokeColor: Color
-  
+
   var body: some View {
-    ZStack {
-      title
-      
+    HStack(spacing: 12) {
       HStack(spacing: 12) {
-        HStack(spacing: 12) {
-          openCloseButton
-          leadingContent
-        }
-        
-        Spacer(minLength: 0)
-        
-        trailingContent
+        openCloseButton
+        leadingContent
       }
+      .frame(maxWidth: .infinity, alignment: .leading)
+
+      title
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
+        .frame(maxWidth: .infinity, alignment: .center)
+
+      trailingContent
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 14)

@@ -19,6 +19,10 @@ import SwiftUI
 ///   view builders.
 /// - Externally, by passing a binding to `isMenuPresented`.
 public struct OverflowMenuView: View {
+  private static let offsetSnappingThreshold: CGFloat = 0.5
+
+  @Environment(\.scenePhase) private var scenePhase
+
   @State private var menuOffset: CGFloat = 0
   @State private var isTrackingMenuDrag = false
   @State private var dragStartOffset: CGFloat?
@@ -26,7 +30,8 @@ public struct OverflowMenuView: View {
   @State private var lastDragDirection: OverflowMenuDragDirection = .none
   @State private var pendingTransition: OverflowMenuPresentationState?
   @State private var lastSettledState: OverflowMenuPresentationState = .closed
-  
+  @State private var transitionGeneration = 0
+
   private let externalIsMenuPresented: Binding<Bool>?
   private let drawerWidth: CGFloat
   private let maxDimOpacity: CGFloat
@@ -45,7 +50,7 @@ public struct OverflowMenuView: View {
   private let mainBackground: () -> AnyView
   private let leftView: (OverflowMenuContext) -> AnyView
   private let mainView: (OverflowMenuContext) -> AnyView
-  
+
   /// Creates an overflow menu container that uses the built-in open-close button in
   /// the top bar.
   ///
@@ -96,7 +101,7 @@ public struct OverflowMenuView: View {
   >(
     isMenuPresented: Binding<Bool>? = nil,
     drawerWidth: CGFloat = 304,
-    maxDimOpacity: CGFloat = 0.45,
+    maxDimOpacity: CGFloat = 0.12,
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
@@ -115,7 +120,7 @@ public struct OverflowMenuView: View {
     let initialPresentationState = Self.initialPresentationState(
       isMenuPresented: isMenuPresented
     )
-    
+
     _menuOffset = State(
       initialValue: Self.initialMenuOffset(
         drawerWidth: drawerWidth,
@@ -123,7 +128,7 @@ public struct OverflowMenuView: View {
       )
     )
     _lastSettledState = State(initialValue: initialPresentationState)
-    
+
     self.externalIsMenuPresented = isMenuPresented
     self.drawerWidth = drawerWidth
     self.maxDimOpacity = maxDimOpacity
@@ -150,7 +155,7 @@ public struct OverflowMenuView: View {
     self.leftView = { AnyView(leftView($0)) }
     self.mainView = { AnyView(mainView($0)) }
   }
-  
+
   /// Creates an overflow menu container with a fully custom open-close button.
   ///
   /// Use this initializer when you want to replace the built-in open-close button with
@@ -201,7 +206,7 @@ public struct OverflowMenuView: View {
   >(
     isMenuPresented: Binding<Bool>? = nil,
     drawerWidth: CGFloat = 304,
-    maxDimOpacity: CGFloat = 0.45,
+    maxDimOpacity: CGFloat = 0.12,
     verticalSpacing: CGFloat = 18,
     mainPadding: CGFloat = 16,
     sidePadding: CGFloat = 20,
@@ -221,7 +226,7 @@ public struct OverflowMenuView: View {
     let initialPresentationState = Self.initialPresentationState(
       isMenuPresented: isMenuPresented
     )
-    
+
     _menuOffset = State(
       initialValue: Self.initialMenuOffset(
         drawerWidth: drawerWidth,
@@ -229,7 +234,7 @@ public struct OverflowMenuView: View {
       )
     )
     _lastSettledState = State(initialValue: initialPresentationState)
-    
+
     self.externalIsMenuPresented = isMenuPresented
     self.drawerWidth = drawerWidth
     self.maxDimOpacity = maxDimOpacity
@@ -249,31 +254,31 @@ public struct OverflowMenuView: View {
     self.leftView = { AnyView(leftView($0)) }
     self.mainView = { AnyView(mainView($0)) }
   }
-  
+
   private var openOffset: CGFloat {
     drawerWidth
   }
-  
+
   private var isMenuPresented: Bool {
     menuOffset > 1
   }
-  
+
   private var currentPresentationState: OverflowMenuPresentationState {
     pendingTransition ?? lastSettledState
   }
-  
+
   private var externalPresentationState: Bool? {
     externalIsMenuPresented?.wrappedValue
   }
-  
+
   private var menuProgress: CGFloat {
     guard openOffset > 0 else {
       return 0
     }
-    
+
     return menuOffset / openOffset
   }
-  
+
   private func context(safeAreaInsets: EdgeInsets) -> OverflowMenuContext {
     OverflowMenuContext(
       safeAreaInsets: safeAreaInsets,
@@ -284,7 +289,7 @@ public struct OverflowMenuView: View {
       toggleAction: toggleMenu
     )
   }
-  
+
   public var body: some View {
     GeometryReader { proxy in
       let safeAreaInsets = proxy.safeAreaInsets
@@ -330,7 +335,7 @@ public struct OverflowMenuView: View {
         mainPanel: AnyView(mainPanel),
         dimOverlay: AnyView(dimOverlay)
       )
-      
+
       ZStack(alignment: .topLeading) {
         backgroundTrack
           .offset(
@@ -338,7 +343,7 @@ public struct OverflowMenuView: View {
             y: -safeAreaInsets.top
           )
           .allowsHitTesting(false)
-        
+
         contentTrack
           .offset(x: -drawerWidth + menuOffset)
           .allowsHitTesting(true)
@@ -351,25 +356,33 @@ public struct OverflowMenuView: View {
       .onChange(of: externalPresentationState) { _, _ in
         syncMenuStateFromExternalBinding()
       }
+      .onChange(of: scenePhase) { _, newPhase in
+        handleScenePhaseChange(newPhase)
+      }
     }
   }
-  
+
   private static func initialPresentationState(
     isMenuPresented: Binding<Bool>?
   ) -> OverflowMenuPresentationState {
     isMenuPresented?.wrappedValue == true ? .open : .closed
   }
-  
+
   private static func initialMenuOffset(
     drawerWidth: CGFloat,
     presentationState: OverflowMenuPresentationState
   ) -> CGFloat {
     presentationState == .open ? drawerWidth : 0
   }
-  
+
   private var menuDragGesture: some Gesture {
     DragGesture(minimumDistance: 3, coordinateSpace: .global)
       .onChanged { value in
+        guard scenePhase == .active else {
+          dismissMenuForSceneTransition()
+          return
+        }
+
         if !isTrackingMenuDrag {
           guard shouldHandleMenuDrag(value) else {
             return
@@ -382,11 +395,16 @@ public struct OverflowMenuView: View {
         } else {
           updateLastDragDirection(with: value.translation.width)
         }
-        
+
         let startOffset = dragStartOffset ?? menuOffset
         menuOffset = clampedMenuOffset(startOffset + value.translation.width)
       }
       .onEnded { value in
+        guard scenePhase == .active else {
+          dismissMenuForSceneTransition()
+          return
+        }
+
         guard isTrackingMenuDrag else {
           resetMenuDragState()
           return
@@ -400,28 +418,32 @@ public struct OverflowMenuView: View {
           projectedOffset: projectedOffset,
           lastDirection: lastDragDirection
         )
-        
+
         settleMenu(
           to: shouldOpen ? .open : .closed,
           from: currentOffset
         )
       }
   }
-  
+
   private func shouldHandleMenuDrag(_ value: DragGesture.Value) -> Bool {
-    abs(value.translation.width) > abs(value.translation.height)
+    guard scenePhase == .active else {
+      return false
+    }
+
+    return abs(value.translation.width) > abs(value.translation.height)
   }
-  
+
   private func clampedMenuOffset(_ value: CGFloat) -> CGFloat {
     min(max(value, 0), openOffset)
   }
-  
+
   private func updateLastDragDirection(with translation: CGFloat) {
     let delta = translation - lastDragTranslation
     lastDragDirection = dragDirection(for: delta, fallback: lastDragDirection)
     lastDragTranslation = translation
   }
-  
+
   private func dragDirection(
     for delta: CGFloat,
     fallback: OverflowMenuDragDirection = .none
@@ -429,14 +451,14 @@ public struct OverflowMenuView: View {
     if delta > 0.5 {
       return .opening
     }
-    
+
     if delta < -0.5 {
       return .closing
     }
-    
+
     return fallback
   }
-  
+
   // Bias the end state toward the user's last drag direction instead of only the final position.
   private func resolveMenuOpenState(
     currentOffset: CGFloat,
@@ -452,58 +474,76 @@ public struct OverflowMenuView: View {
       return projectedOffset > openOffset * 0.5
     }
   }
-  
+
   private func resetMenuDragState() {
     isTrackingMenuDrag = false
     dragStartOffset = nil
     lastDragTranslation = 0
     lastDragDirection = .none
   }
-  
+
   private func toggleMenu() {
+    guard scenePhase == .active else {
+      dismissMenuForSceneTransition()
+      return
+    }
+
     currentPresentationState == .open ? closeMenu() : openMenu()
   }
-  
+
   private func openMenu() {
+    guard scenePhase == .active else {
+      dismissMenuForSceneTransition()
+      return
+    }
+
     settleMenu(to: .open)
   }
-  
+
   private func closeMenu() {
     settleMenu(to: .closed)
   }
-  
+
   private func syncMenuStateFromExternalBinding() {
+    guard scenePhase == .active else {
+      dismissMenuForSceneTransition()
+      return
+    }
+
     guard let externalPresentationState else {
       return
     }
-    
+
     let requestedState: OverflowMenuPresentationState = externalPresentationState ? .open : .closed
-    
+
     guard requestedState != currentPresentationState else {
       syncExternalPresentationState(with: requestedState)
       return
     }
-    
+
     settleMenu(to: requestedState)
   }
-  
+
   private func settleMenu(
     to requestedState: OverflowMenuPresentationState,
     from sourceOffset: CGFloat? = nil
   ) {
     let targetOffset = targetOffset(for: requestedState)
     let referenceOffset = sourceOffset ?? menuOffset
-    let isAlreadyAtTarget = abs(referenceOffset - targetOffset) <= 0.5
+    let isAlreadyAtTarget =
+      abs(referenceOffset - targetOffset) <= Self.offsetSnappingThreshold
 
     guard requestedState != currentPresentationState || !isAlreadyAtTarget else {
       syncExternalPresentationState(with: requestedState)
       resetMenuDragState()
       return
     }
-    
+
+    let currentTransitionGeneration = advanceTransitionGeneration()
+
     onEvent(willEvent(for: requestedState))
-    
-    if abs(referenceOffset - targetOffset) <= 0.5 {
+
+    if abs(referenceOffset - targetOffset) <= Self.offsetSnappingThreshold {
       menuOffset = targetOffset
       lastSettledState = requestedState
       pendingTransition = nil
@@ -515,36 +555,76 @@ public struct OverflowMenuView: View {
       withAnimation(settleAnimation, completionCriteria: .logicallyComplete) {
         menuOffset = targetOffset
       } completion: {
+        guard transitionGeneration == currentTransitionGeneration else {
+          return
+        }
+
         lastSettledState = requestedState
         pendingTransition = nil
         onEvent(didEvent(for: requestedState))
       }
     }
-    
+
     resetMenuDragState()
   }
-  
+
   private func targetOffset(for state: OverflowMenuPresentationState) -> CGFloat {
     state == .open ? openOffset : 0
   }
-  
+
   private func willEvent(for state: OverflowMenuPresentationState) -> OverflowMenuEvent {
     state == .open ? .willOpen : .willClose
   }
-  
+
   private func didEvent(for state: OverflowMenuPresentationState) -> OverflowMenuEvent {
     state == .open ? .didOpen : .didClose
   }
-  
+
   private func syncExternalPresentationState(
     with state: OverflowMenuPresentationState
   ) {
     let isMenuPresented = state == .open
-    
+
     guard externalIsMenuPresented?.wrappedValue != isMenuPresented else {
       return
     }
-    
+
     externalIsMenuPresented?.wrappedValue = isMenuPresented
+  }
+
+  private func handleScenePhaseChange(_ newPhase: ScenePhase) {
+    guard newPhase != .active else {
+      return
+    }
+
+    dismissMenuForSceneTransition()
+  }
+
+  private func dismissMenuForSceneTransition() {
+    let shouldSendCloseEvents =
+      currentPresentationState != .closed ||
+      menuOffset > Self.offsetSnappingThreshold ||
+      externalIsMenuPresented?.wrappedValue == true
+
+    _ = advanceTransitionGeneration()
+    pendingTransition = nil
+    resetMenuDragState()
+
+    guard shouldSendCloseEvents else {
+      syncExternalPresentationState(with: .closed)
+      return
+    }
+
+    onEvent(.willClose)
+    menuOffset = targetOffset(for: .closed)
+    lastSettledState = .closed
+    syncExternalPresentationState(with: .closed)
+    onEvent(.didClose)
+  }
+
+  @discardableResult
+  private func advanceTransitionGeneration() -> Int {
+    transitionGeneration += 1
+    return transitionGeneration
   }
 }

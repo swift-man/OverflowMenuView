@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: deploy-docc-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy-docs:
@@ -35,5 +35,6 @@ jobs:
           publish_branch: main
           publish_dir: ./docs
           destination_dir: OverflowMenuView
+          # Preserve sibling documentation directories in swift-man/docs.
           keep_files: true
           full_commit_message: Deploy OverflowMenuView DocC from ${{ github.repository }}@${{ github.sha }}

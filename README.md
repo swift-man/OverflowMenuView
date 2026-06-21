@@ -219,6 +219,8 @@ Available events:
 - `topBarBackgroundColor` defaults to the system background color and adapts to
   light and dark appearance
 - `topBarStrokeColor` defaults to the system separator color
+- Horizontal-dominant drags control the drawer while vertical-dominant gestures
+  are left to the content views
 - `settleAnimation` controls the final open and close animation
 
 ## Folder Structure
