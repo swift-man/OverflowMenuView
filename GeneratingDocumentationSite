@@ -20,6 +20,13 @@ project_child_path() {
   esac
 
   case "$absolute_path" in
+    */../*|*/..)
+      echo "error: refusing to use path with parent traversal: $raw_path" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$absolute_path" in
     "$PROJECT_ROOT"/*) ;;
     *)
       echo "error: refusing to use path outside project root: $raw_path" >&2
@@ -34,8 +41,25 @@ project_child_path() {
 
   parent_path="$(dirname "$absolute_path")"
   base_name="$(basename "$absolute_path")"
-  mkdir -p "$parent_path"
-  resolved_parent="$(cd "$parent_path" && pwd -P)"
+
+  existing_parent="$parent_path"
+  while [ ! -d "$existing_parent" ]; do
+    next_parent="$(dirname "$existing_parent")"
+    if [ "$existing_parent" = "$next_parent" ]; then
+      echo "error: unable to resolve parent path for: $raw_path" >&2
+      exit 1
+    fi
+    existing_parent="$next_parent"
+  done
+
+  resolved_existing_parent="$(cd "$existing_parent" && pwd -P)"
+  unresolved_parent_suffix="${parent_path#"$existing_parent"}"
+  unresolved_parent_suffix="${unresolved_parent_suffix#/}"
+  if [ -n "$unresolved_parent_suffix" ]; then
+    resolved_parent="$resolved_existing_parent/$unresolved_parent_suffix"
+  else
+    resolved_parent="$resolved_existing_parent"
+  fi
   resolved_path="$resolved_parent/$base_name"
 
   case "$resolved_path" in
@@ -45,6 +69,8 @@ project_child_path() {
       exit 1
       ;;
   esac
+
+  mkdir -p "$resolved_parent"
 
   printf '%s\n' "$resolved_path"
 }
