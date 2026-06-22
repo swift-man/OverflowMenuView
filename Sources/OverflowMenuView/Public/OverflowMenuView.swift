@@ -23,6 +23,12 @@ public struct OverflowMenuView: View {
   private static let menuDragMinimumHorizontalDistance: CGFloat = 8
   private static let menuDragHorizontalDominanceRatio: CGFloat = 1.5
   private static let menuDragLeadingEdgeActivationWidth: CGFloat = 44
+  private static let dragDirectionChangeThreshold: CGFloat = 0.5
+  private static let minimumOpeningOffset: CGFloat = 10
+  private static let projectedOpeningThresholdRatio: CGFloat = 0.06
+  private static let currentClosingThresholdRatio: CGFloat = 0.94
+  private static let projectedClosingThresholdRatio: CGFloat = 0.8
+  private static let neutralProjectedOpenThresholdRatio: CGFloat = 0.5
 
   @Environment(\.scenePhase) private var scenePhase
 
@@ -483,11 +489,11 @@ public struct OverflowMenuView: View {
     for delta: CGFloat,
     fallback: OverflowMenuDragDirection = .none
   ) -> OverflowMenuDragDirection {
-    if delta > 0.5 {
+    if delta > Self.dragDirectionChangeThreshold {
       return .opening
     }
 
-    if delta < -0.5 {
+    if delta < -Self.dragDirectionChangeThreshold {
       return .closing
     }
 
@@ -502,11 +508,13 @@ public struct OverflowMenuView: View {
   ) -> Bool {
     switch lastDirection {
     case .opening:
-      return currentOffset > 10 || projectedOffset > openOffset * 0.06
+      return currentOffset > Self.minimumOpeningOffset ||
+        projectedOffset > openOffset * Self.projectedOpeningThresholdRatio
     case .closing:
-      return currentOffset > openOffset * 0.94 && projectedOffset > openOffset * 0.8
+      return currentOffset > openOffset * Self.currentClosingThresholdRatio &&
+        projectedOffset > openOffset * Self.projectedClosingThresholdRatio
     case .none:
-      return projectedOffset > openOffset * 0.5
+      return projectedOffset > openOffset * Self.neutralProjectedOpenThresholdRatio
     }
   }
 
