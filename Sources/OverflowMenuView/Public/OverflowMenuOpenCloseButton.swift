@@ -15,9 +15,7 @@ import SwiftUI
 public struct OverflowMenuOpenCloseButton: View {
   private let isMenuPresented: Bool
   private let action: () -> Void
-  
-  @State private var isPressActive = false
-  
+
   /// Creates the package's default open-close button.
   ///
   /// - Parameters:
@@ -28,33 +26,15 @@ public struct OverflowMenuOpenCloseButton: View {
     self.isMenuPresented = isMenuPresented
     self.action = action
   }
-  
+
   public var body: some View {
-    OverflowMenuButtonLabel()
-      .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-      .onLongPressGesture(
-        minimumDuration: 0,
-        maximumDistance: 24,
-        pressing: { isPressing in
-          guard isPressing else {
-            isPressActive = false
-            return
-          }
-          
-          guard !isPressActive else {
-            return
-          }
-          
-          isPressActive = true
-          action()
-        },
-        perform: {}
-      )
+    Button(action: action) {
+      OverflowMenuButtonLabel()
+        .contentShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+      .buttonStyle(.plain)
       .accessibilityElement(children: .ignore)
       .accessibilityAddTraits(.isButton)
       .accessibilityLabel(isMenuPresented ? "Close menu" : "Open menu")
-      .accessibilityAction {
-        action()
-      }
   }
 }

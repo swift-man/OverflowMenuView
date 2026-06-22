@@ -1,11 +1,19 @@
 # OverflowMenuUI
 
+![Badge](https://img.shields.io/badge/Swift-6.0-FA7343.svg?style=flat-square&logo=Swift&logoColor=white)
+![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=white)
+![Badge - Version](https://img.shields.io/badge/Version-0.6.0-1177AA?style=flat-square)
+![Badge - Swift Package Manager](https://img.shields.io/badge/SPM-compatible-orange?style=flat-square)
+![Badge - Platform](https://img.shields.io/badge/iOS-v17.0-yellow?style=flat-square)
+![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)
+
 `OverflowMenuUI` is a SwiftUI slide-out menu container for iOS.
 
 It provides:
 - A left-side drawer and a main content surface in one container
 - A built-in top bar with a default open-close button, or support for a custom one
 - Drag-to-open and drag-to-close interactions
+- Optional disabling of menu interactions for screens that should keep the drawer closed
 - A dimmed overlay that closes the menu when tapped
 - Optional external control through `Binding<Bool>`
 - Context-driven actions inside injected content via `OverflowMenuContext`
@@ -14,8 +22,13 @@ It provides:
 ## Requirements
 
 - iOS 17.0+
-- Swift 6.2 toolchain
+- Swift 6.0 toolchain
 - SwiftUI
+
+## API Documentation
+
+Swift DocC API documentation for `OverflowMenuUI` is available at
+https://docs.gorani.me/OverflowMenuView/documentation/overflowmenuui/.
 
 ## Package
 
@@ -172,6 +185,26 @@ The binding stays in sync in both directions:
 - Drag gestures update the binding after the drawer settles
 - Tapping the dimmed overlay updates the binding
 
+## Disabling Menu Interaction
+
+Set `isMenuInteractionEnabled` to `false` when a screen should reuse the
+container chrome while preventing the drawer from opening through gestures,
+context actions, or external state.
+
+```swift
+OverflowMenuView(
+  isMenuPresented: $isMenuPresented,
+  isMenuInteractionEnabled: false,
+  title: { _ in Text("Settings") },
+  leadingContent: { _ in EmptyView() },
+  trailingContent: { _ in EmptyView() },
+  leftBackground: { Color.gray.opacity(0.15) },
+  mainBackground: { Color.white },
+  leftView: { _ in Text("Drawer") },
+  mainView: { _ in Text("Settings") }
+)
+```
+
 ## OverflowMenuContext
 
 Every public content closure receives an `OverflowMenuContext`.
@@ -199,11 +232,19 @@ Available events:
 
 ## Customization Notes
 
-- `drawerWidth` controls the width of the menu drawer
+- `drawerWidth` controls the width of the menu drawer, and values below 1 point
+  are clamped to 1 point
 - `maxDimOpacity` controls how dark the overlay becomes
 - `verticalSpacing` controls the gap between the top bar and the main content
 - `mainPadding` controls safe-area-aware padding around the main panel
 - `sidePadding` controls safe-area-aware padding around the drawer content
+- `topBarBackgroundColor` defaults to the system background color and adapts to
+  light and dark appearance
+- `isMenuInteractionEnabled` can disable opening gestures and context actions
+  while keeping the menu closed
+- `topBarStrokeColor` defaults to the system separator color
+- Opening drags start from the leading edge and require a clear horizontal
+  direction so content scroll gestures can keep their own interaction
 - `settleAnimation` controls the final open and close animation
 
 ## Folder Structure

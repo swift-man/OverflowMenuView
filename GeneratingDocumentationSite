@@ -1,0 +1,127 @@
+#!/usr/bin/env sh
+set -eu
+
+TARGET_NAME="${TARGET_NAME:-OverflowMenuUI}"
+PACKAGE_BUILD_PATH="${PACKAGE_BUILD_PATH:-.build}"
+SCHEME_NAME="${SCHEME_NAME:-$TARGET_NAME}"
+DERIVED_DATA_PATH="${DERIVED_DATA_PATH:-$PACKAGE_BUILD_PATH/docc-derived-data}"
+DOCS_OUTPUT_PATH="${DOCS_OUTPUT_PATH:-./docs}"
+HOSTING_BASE_PATH="${HOSTING_BASE_PATH:-OverflowMenuView}"
+DESTINATION="${DESTINATION:-generic/platform=iOS Simulator}"
+
+PROJECT_ROOT="$(pwd -P)"
+DOCC="$(xcrun --find docc)"
+
+project_child_path() {
+  raw_path="$1"
+  case "$raw_path" in
+    /*) absolute_path="$raw_path" ;;
+    *) absolute_path="$PROJECT_ROOT/$raw_path" ;;
+  esac
+
+  case "$absolute_path" in
+    */../*|*/..)
+      echo "error: refusing to use path with parent traversal: $raw_path" >&2
+      exit 1
+      ;;
+  esac
+
+  case "$absolute_path" in
+    "$PROJECT_ROOT"/*) ;;
+    *)
+      echo "error: refusing to use path outside project root: $raw_path" >&2
+      exit 1
+      ;;
+  esac
+
+  if [ "$absolute_path" = "$PROJECT_ROOT" ]; then
+    echo "error: refusing to use project root as an output path" >&2
+    exit 1
+  fi
+
+  parent_path="$(dirname "$absolute_path")"
+  base_name="$(basename "$absolute_path")"
+
+  existing_parent="$parent_path"
+  while [ ! -d "$existing_parent" ]; do
+    next_parent="$(dirname "$existing_parent")"
+    if [ "$existing_parent" = "$next_parent" ]; then
+      echo "error: unable to resolve parent path for: $raw_path" >&2
+      exit 1
+    fi
+    existing_parent="$next_parent"
+  done
+
+  resolved_existing_parent="$(cd "$existing_parent" && pwd -P)"
+  unresolved_parent_suffix="${parent_path#"$existing_parent"}"
+  unresolved_parent_suffix="${unresolved_parent_suffix#/}"
+  if [ -n "$unresolved_parent_suffix" ]; then
+    resolved_parent="$resolved_existing_parent/$unresolved_parent_suffix"
+  else
+    resolved_parent="$resolved_existing_parent"
+  fi
+  resolved_path="$resolved_parent/$base_name"
+
+  case "$resolved_path" in
+    "$PROJECT_ROOT"/*) ;;
+    *)
+      echo "error: refusing to use resolved path outside project root: $raw_path" >&2
+      exit 1
+      ;;
+  esac
+
+  mkdir -p "$resolved_parent"
+
+  printf '%s\n' "$resolved_path"
+}
+
+DERIVED_DATA_PATH="$(project_child_path "$DERIVED_DATA_PATH")"
+DOCS_OUTPUT_PATH="$(project_child_path "$DOCS_OUTPUT_PATH")"
+
+remove_path() {
+  path="$1"
+  [ -e "$path" ] || return 0
+  rm -rf "$path" 2>/dev/null || {
+    sleep 1
+    rm -rf "$path"
+  }
+}
+
+remove_path "$DERIVED_DATA_PATH" || echo "warning: failed to fully remove $DERIVED_DATA_PATH" >&2
+remove_path "$DOCS_OUTPUT_PATH" || echo "warning: failed to fully remove $DOCS_OUTPUT_PATH" >&2
+
+xcodebuild docbuild \
+  -scheme "$SCHEME_NAME" \
+  -destination "$DESTINATION" \
+  -derivedDataPath "$DERIVED_DATA_PATH" \
+  COMPILER_INDEX_STORE_ENABLE=NO \
+  -quiet
+
+DOCC_ARCHIVE_PATH="$(find "$DERIVED_DATA_PATH/Build/Products" -name "$TARGET_NAME.doccarchive" -type d -print | head -n 1)"
+if [ -z "$DOCC_ARCHIVE_PATH" ]; then
+  echo "error: no DocC archive found for $TARGET_NAME" >&2
+  exit 1
+fi
+
+"$DOCC" process-archive \
+  transform-for-static-hosting "$DOCC_ARCHIVE_PATH" \
+  --output-path "$DOCS_OUTPUT_PATH" \
+  --hosting-base-path "$HOSTING_BASE_PATH"
+
+HOSTING_BASE_PATH="/${HOSTING_BASE_PATH#/}"
+export HOSTING_BASE_PATH
+
+find "$DOCS_OUTPUT_PATH" -type f -name '*.html' \
+  -exec perl -0pi -e '
+    my $base = $ENV{"HOSTING_BASE_PATH"};
+    s#href="/favicon\.ico"#href="$base/favicon.ico"#g;
+    s#href="/favicon\.svg"#href="$base/favicon.svg"#g;
+    s#var baseUrl = "/"#var baseUrl = "$base/"#g;
+    s#src="/js/#src="$base/js/#g;
+    s#href="/css/#href="$base/css/#g;
+  ' {} +
+
+find "$DOCS_OUTPUT_PATH" -type f -name '*.js' \
+  -exec perl -0pi -e 's/[ \t]+$//mg' {} +
+
+remove_path "$DERIVED_DATA_PATH" || echo "warning: failed to fully remove $DERIVED_DATA_PATH" >&2
