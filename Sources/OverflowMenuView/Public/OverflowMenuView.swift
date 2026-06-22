@@ -29,6 +29,7 @@ public struct OverflowMenuView: View {
   private static let currentClosingThresholdRatio: CGFloat = 0.94
   private static let projectedClosingThresholdRatio: CGFloat = 0.8
   private static let neutralProjectedOpenThresholdRatio: CGFloat = 0.5
+  private static let minimumDrawerWidth: CGFloat = 1
 
   @Environment(\.scenePhase) private var scenePhase
 
@@ -72,7 +73,8 @@ public struct OverflowMenuView: View {
   ///   - isMenuPresented: An optional binding used to control the menu from a
   ///     parent view. When provided, changes made by the parent update the
   ///     drawer, and user interactions inside the drawer update the binding.
-  ///   - drawerWidth: The fixed width of the side menu drawer.
+  ///   - drawerWidth: The fixed width of the side menu drawer. Values below
+  ///     1 point are clamped to 1 point.
   ///   - maxDimOpacity: The maximum opacity applied to the dimmed overlay behind
   ///     the main content when the menu is fully open.
   ///   - verticalSpacing: The vertical spacing between the top bar and the main
@@ -131,20 +133,21 @@ public struct OverflowMenuView: View {
     @ViewBuilder leftView: @escaping (OverflowMenuContext) -> LeftView,
     @ViewBuilder mainView: @escaping (OverflowMenuContext) -> MainView
   ) {
+    let resolvedDrawerWidth = Self.resolvedDrawerWidth(drawerWidth)
     let initialPresentationState = Self.initialPresentationState(
       isMenuPresented: isMenuPresented
     )
 
     _menuOffset = State(
       initialValue: Self.initialMenuOffset(
-        drawerWidth: drawerWidth,
+        drawerWidth: resolvedDrawerWidth,
         presentationState: initialPresentationState
       )
     )
     _lastSettledState = State(initialValue: initialPresentationState)
 
     self.externalIsMenuPresented = isMenuPresented
-    self.drawerWidth = drawerWidth
+    self.drawerWidth = resolvedDrawerWidth
     self.maxDimOpacity = maxDimOpacity
     self.verticalSpacing = verticalSpacing
     self.mainPadding = mainPadding
@@ -180,7 +183,8 @@ public struct OverflowMenuView: View {
   ///   - isMenuPresented: An optional binding used to control the menu from a
   ///     parent view. When provided, changes made by the parent update the
   ///     drawer, and user interactions inside the drawer update the binding.
-  ///   - drawerWidth: The fixed width of the side menu drawer.
+  ///   - drawerWidth: The fixed width of the side menu drawer. Values below
+  ///     1 point are clamped to 1 point.
   ///   - maxDimOpacity: The maximum opacity applied to the dimmed overlay behind
   ///     the main content when the menu is fully open.
   ///   - verticalSpacing: The vertical spacing between the top bar and the main
@@ -242,20 +246,21 @@ public struct OverflowMenuView: View {
     @ViewBuilder leftView: @escaping (OverflowMenuContext) -> LeftView,
     @ViewBuilder mainView: @escaping (OverflowMenuContext) -> MainView
   ) {
+    let resolvedDrawerWidth = Self.resolvedDrawerWidth(drawerWidth)
     let initialPresentationState = Self.initialPresentationState(
       isMenuPresented: isMenuPresented
     )
 
     _menuOffset = State(
       initialValue: Self.initialMenuOffset(
-        drawerWidth: drawerWidth,
+        drawerWidth: resolvedDrawerWidth,
         presentationState: initialPresentationState
       )
     )
     _lastSettledState = State(initialValue: initialPresentationState)
 
     self.externalIsMenuPresented = isMenuPresented
-    self.drawerWidth = drawerWidth
+    self.drawerWidth = resolvedDrawerWidth
     self.maxDimOpacity = maxDimOpacity
     self.verticalSpacing = verticalSpacing
     self.mainPadding = mainPadding
@@ -398,6 +403,10 @@ public struct OverflowMenuView: View {
     presentationState: OverflowMenuPresentationState
   ) -> CGFloat {
     presentationState == .open ? drawerWidth : 0
+  }
+
+  private static func resolvedDrawerWidth(_ drawerWidth: CGFloat) -> CGFloat {
+    max(drawerWidth, minimumDrawerWidth)
   }
 
   private var menuDragGesture: some Gesture {

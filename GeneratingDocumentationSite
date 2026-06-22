@@ -98,4 +98,4 @@ find "$DOCS_OUTPUT_PATH" -type f -name '*.html' \
 find "$DOCS_OUTPUT_PATH" -type f -name '*.js' \
   -exec perl -0pi -e 's/[ \t]+$//mg' {} +
 
-remove_path "$DERIVED_DATA_PATH" || true
+remove_path "$DERIVED_DATA_PATH" || echo "warning: failed to fully remove $DERIVED_DATA_PATH" >&2

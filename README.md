@@ -232,7 +232,8 @@ Available events:
 
 ## Customization Notes
 
-- `drawerWidth` controls the width of the menu drawer
+- `drawerWidth` controls the width of the menu drawer, and values below 1 point
+  are clamped to 1 point
 - `maxDimOpacity` controls how dark the overlay becomes
 - `verticalSpacing` controls the gap between the top bar and the main content
 - `mainPadding` controls safe-area-aware padding around the main panel
