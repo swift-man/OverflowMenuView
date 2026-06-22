@@ -242,8 +242,8 @@ Available events:
 - `isMenuInteractionEnabled` can disable opening gestures and context actions
   while keeping the menu closed
 - `topBarStrokeColor` defaults to the system separator color
-- Horizontal-dominant drags control the drawer while vertical-dominant gestures
-  are left to the content views
+- Opening drags start from the leading edge and require a clear horizontal
+  direction so content scroll gestures can keep their own interaction
 - `settleAnimation` controls the final open and close animation
 
 ## Folder Structure

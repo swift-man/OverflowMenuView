@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-docc-${{ github.ref }}
+  group: deploy-docc-${{ github.ref_name }}
   cancel-in-progress: true
 
 jobs:

@@ -61,8 +61,8 @@ remove_path() {
   }
 }
 
-remove_path "$DERIVED_DATA_PATH"
-remove_path "$DOCS_OUTPUT_PATH"
+remove_path "$DERIVED_DATA_PATH" || echo "warning: failed to fully remove $DERIVED_DATA_PATH" >&2
+remove_path "$DOCS_OUTPUT_PATH" || echo "warning: failed to fully remove $DOCS_OUTPUT_PATH" >&2
 
 xcodebuild docbuild \
   -scheme "$SCHEME_NAME" \

@@ -20,6 +20,9 @@ import SwiftUI
 /// - Externally, by passing a binding to `isMenuPresented`.
 public struct OverflowMenuView: View {
   private static let offsetSnappingThreshold: CGFloat = 0.5
+  private static let menuDragMinimumHorizontalDistance: CGFloat = 8
+  private static let menuDragHorizontalDominanceRatio: CGFloat = 1.5
+  private static let menuDragLeadingEdgeActivationWidth: CGFloat = 44
 
   @Environment(\.scenePhase) private var scenePhase
 
@@ -447,7 +450,23 @@ public struct OverflowMenuView: View {
       return false
     }
 
-    return abs(value.translation.width) > abs(value.translation.height)
+    let horizontalDistance = abs(value.translation.width)
+    let verticalDistance = abs(value.translation.height)
+    let isOpenOrMoving =
+      currentPresentationState != .closed ||
+      menuOffset > Self.offsetSnappingThreshold
+    let startedFromLeadingEdge =
+      value.startLocation.x <= Self.menuDragLeadingEdgeActivationWidth
+
+    guard isOpenOrMoving || startedFromLeadingEdge else {
+      return false
+    }
+
+    guard horizontalDistance >= Self.menuDragMinimumHorizontalDistance else {
+      return false
+    }
+
+    return horizontalDistance >= verticalDistance * Self.menuDragHorizontalDominanceRatio
   }
 
   private func clampedMenuOffset(_ value: CGFloat) -> CGFloat {
@@ -624,7 +643,7 @@ public struct OverflowMenuView: View {
   }
 
   private func handleScenePhaseChange(_ newPhase: ScenePhase) {
-    guard newPhase != .active else {
+    guard newPhase == .background else {
       return
     }
 
