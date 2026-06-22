@@ -408,6 +408,12 @@ public struct OverflowMenuView: View {
           return
         }
 
+        guard isMenuInteractionEnabled else {
+          resetMenuDragState()
+          closeMenu()
+          return
+        }
+
         if !isTrackingMenuDrag {
           guard shouldHandleMenuDrag(value) else {
             return
@@ -427,6 +433,12 @@ public struct OverflowMenuView: View {
       .onEnded { value in
         guard scenePhase == .active else {
           dismissMenuForSceneTransition()
+          return
+        }
+
+        guard isMenuInteractionEnabled else {
+          resetMenuDragState()
+          closeMenu()
           return
         }
 
